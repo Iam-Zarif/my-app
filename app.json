@@ -19,7 +19,8 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo-.png",
         "backgroundColor": "#1A1A1A"
-      }
+      },
+      
     },
     "ios": {
       "bundleIdentifier": "com.mostofafatin.myapp",

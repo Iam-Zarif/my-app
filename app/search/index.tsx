@@ -10,23 +10,25 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ArrowLeft, Search, X } from "lucide-react-native";
 import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import colors from "../../theme";
 import { useMovies } from "../../context/MoviesContext";
 
-const SearchScreen = () => {
+const IMAGE_BASE = "https://image.tmdb.org/t/p/w780";
+
+export default function SearchScreen() {
   const router = useRouter();
   const { trending, popular, topRated, upcoming } = useMovies();
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const IMAGE_BASE = "https://image.tmdb.org/t/p/w780";
+  const [lastSearches, setLastSearches] = useState<string[]>([]);
+
   const allMovies = useMemo(
     () => [...trending, ...popular, ...topRated, ...upcoming],
     [trending, popular, topRated, upcoming],
   );
 
-
-  const results = useMemo(() => {
+  const filteredResults = useMemo(() => {
     if (!query.trim()) return [];
     setLoading(true);
     const filtered = allMovies.filter((m) =>
@@ -36,22 +38,24 @@ const SearchScreen = () => {
     return filtered;
   }, [query, allMovies]);
 
+  useEffect(() => {
+    if (query.trim() && !lastSearches.includes(query)) {
+      setLastSearches((prev) => [query, ...prev].slice(0, 10));
+    }
+  }, [query]);
+
+const suggestions = useMemo(() => {
+  if (query.trim()) return []; 
+  return lastSearches
+    .map((q) =>
+      allMovies.find((m) => m.title.toLowerCase() === q.toLowerCase()),
+    )
+    .filter(Boolean); 
+}, [query, lastSearches, allMovies]);
+
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <Image
-        source={require("../../assets/logo.png")}
-        resizeMode="contain"
-        style={{
-          width: 240,
-          height: 240,
-          position: "absolute",
-          alignSelf: "center",
-          top: "50%",
-          transform: [{ translateY: -120 }],
-          opacity: 0.06,
-        }}
-      />
-
       <ScrollView
         contentContainerStyle={{ paddingBottom: 48 }}
         showsVerticalScrollIndicator={false}
@@ -61,12 +65,11 @@ const SearchScreen = () => {
           edges={["top"]}
           style={{ backgroundColor: colors.background }}
         >
-          <View style={{ paddingHorizontal: 16, paddingVertical: 12 }}>
+          <View style={{ paddingHorizontal: 16 }}>
             <View
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                marginBottom: 12,
               }}
             >
               <TouchableOpacity
@@ -91,14 +94,13 @@ const SearchScreen = () => {
               </Text>
             </View>
 
-            <View
+            <View className="mt-2"
               style={{
                 backgroundColor: colors.surface,
                 borderRadius: 14,
                 borderWidth: 1,
                 borderColor: colors.border,
                 paddingHorizontal: 12,
-                paddingVertical: 10,
                 flexDirection: "row",
                 alignItems: "center",
               }}
@@ -108,13 +110,13 @@ const SearchScreen = () => {
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Search movies"
-                placeholderTextColor={colors.textMuted}
+                placeholderTextColor={colors.textSecondary}
                 style={{
-                  color: colors.textPrimary,
+                  color: "#fff",
                   flex: 1,
                   marginLeft: 8,
-                  fontSize: 15,
-                  height: 20,
+                  fontSize: 16,
+                  height: 40,
                 }}
               />
               {query.length > 0 && (
@@ -123,20 +125,29 @@ const SearchScreen = () => {
                 </TouchableOpacity>
               )}
             </View>
-
-            {query.length > 0 && !loading && (
-              <Text style={{ color: colors.textSecondary, marginTop: 8 }}>
-                {results.length} results
-              </Text>
-            )}
           </View>
+          {query.length > 0 && !loading && (
+            <Text
+            className="border-b border-neutral-500"
+              style={{
+                color: colors.textSecondary,
+                marginTop: 8,
+                paddingHorizontal: 16,
+                paddingBottom:10
+              }}
+            >
+              {filteredResults.length} results found
+            </Text>
+          )}
         </SafeAreaView>
 
-        {loading ? (
-          <View style={{ marginTop: 32, alignItems: "center" }}>
+        {loading && (
+          <View style={{ marginTop: 16, alignItems: "center" }}>
             <ActivityIndicator size="large" color={colors.primary} />
           </View>
-        ) : (
+        )}
+
+        {!loading && (
           <View
             style={{
               flexDirection: "row",
@@ -146,36 +157,50 @@ const SearchScreen = () => {
               marginTop: 8,
             }}
           >
-            {results.map((item, index) => (
-              <TouchableOpacity
-                key={`${item.id}-${index}`} 
-                onPress={() => router.push(`/movies/${item.id}`)}
-                style={{ width: "48%", marginBottom: 16 }}
-              >
-                <Image
-                  source={{
-                    uri: `${IMAGE_BASE}${item.backdrop_path || item.poster_path}`,
+            {(query ? filteredResults : suggestions)?.map((item, index) => {
+              if (!item) return null;
+              return (
+                <TouchableOpacity
+                  key={`${item.id}-${index}`}
+                  onPress={() => {
+                    router.push(`/movies/${item.id}`);
+                    if (!lastSearches.includes(item.title)) {
+                      setLastSearches((prev) =>
+                        [item.title, ...prev].slice(0, 10),
+                      );
+                    }
                   }}
-                  style={{
-                    width: "100%",
-                    height: 220,
-                    borderRadius: 14,
-                    backgroundColor: colors.surface,
-                  }}
-                />
-                <Text
-                  numberOfLines={1}
-                  style={{ color: colors.textPrimary, marginTop: 6 }}
+                  style={{ width: "48%", marginBottom: 16 }}
                 >
-                  {item.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
+                  <Image
+                    source={{
+                      uri: `${IMAGE_BASE}${item.backdrop_path || item.poster_path}`,
+                    }}
+                    style={{
+                      width: "100%",
+                      height: 220,
+                      borderRadius: 14,
+                      backgroundColor: colors.surface,
+                    }}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={{ color: colors.textPrimary, marginTop: 6 }}
+                  >
+                    {item.title}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            {!query && suggestions.length === 0 && (
+              <Text style={{ color: colors.textSecondary, marginTop: 12 }}>
+                No recent searches
+              </Text>
+            )}
           </View>
         )}
       </ScrollView>
     </View>
   );
-};
-
-export default SearchScreen;
+}

@@ -10,14 +10,14 @@ type MovieListProps = {
   title: string;
   section: SectionType;
   route: string;
-  onPosterLoaded: () => void;
+
 };
 
 const MovieList: React.FC<MovieListProps> = ({
   title,
   section,
   route,
-  onPosterLoaded,
+
 }) => {
   const router = useRouter();
   const moviesContext = useMovies();
@@ -55,7 +55,7 @@ const MovieList: React.FC<MovieListProps> = ({
             }}
             width={150}
             onPress={() => router.push(`/movies/${movie.id}`)}
-            onLoadEnd={onPosterLoaded}
+     
           />
         ))}
       </ScrollView>

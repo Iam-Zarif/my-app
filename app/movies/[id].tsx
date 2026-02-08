@@ -1,4 +1,6 @@
-import React, { useMemo, useState } from "react";
+import  { useEffect, useMemo, useRef, useState } from "react";
+import * as Notifications from "expo-notifications";
+
 import {
   View,
   Text,
@@ -7,16 +9,19 @@ import {
   TouchableOpacity,
   RefreshControl,
 } from "react-native";
-import { ArrowLeft, Play, Heart } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import colors from "../../theme";
 import { useMovies } from "../../context/MoviesContext";
+import { ArrowLeft, Heart, Play } from "lucide-react-native";
+import MovieDetailPageLoader from "../../components/MovieDetailPageLoader";
 
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w780";
 const THUMB_BASE = "https://image.tmdb.org/t/p/w342";
 
 export default function MovieDetail() {
+  const notifiedRef = useRef(false);
+
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id?: string }>();
   const { trending, upcoming, topRated, popular, loading, refresh } =
@@ -40,8 +45,6 @@ export default function MovieDetail() {
     return movies.find((m) => m.id === Number(id));
   }, [id, movies]);
 
-
-
   const similarMovies = useMemo(() => {
     if (!movie) return [];
     return movies.filter((m) => m.id !== movie.id).slice(0, 6);
@@ -49,52 +52,31 @@ export default function MovieDetail() {
 
   if (loading || !movie) {
     return (
-      <ScrollView
-     
-        style={{ flex: 1, backgroundColor: colors.background }}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-          />
-        }
-      >
-        <View
-          style={{
-            width: "100%",
-            height: 620,
-            backgroundColor: colors.surface,
-          }}
-        />
-        <View style={{ padding: 16 }}>
-          <View
-            style={{
-              height: 28,
-              width: "70%",
-              backgroundColor: colors.surface,
-              marginBottom: 12,
-            }}
-          />
-          <View
-            style={{
-              height: 16,
-              width: "40%",
-              backgroundColor: colors.surface,
-              marginBottom: 16,
-            }}
-          />
-          <View
-            style={{
-              height: 80,
-              width: "100%",
-              backgroundColor: colors.surface,
-            }}
-          />
-        </View>
-      </ScrollView>
+      <MovieDetailPageLoader refreshing={refreshing} onRefresh={onRefresh} />
     );
   }
+
+
+useEffect(() => {
+  if (!movie || notifiedRef.current) return;
+  notifiedRef.current = true;
+
+  Notifications.scheduleNotificationAsync({
+    content: {
+      title: "🎬 Movie Night Awaits",
+      body: `You visited "${movie.title}". Watch the trailer now.`,
+      sound: "default",
+      data: { movieId: movie.id },
+    },
+    trigger: null,
+  });
+}, [movie]);
+
+
+
+
+
+
 
   return (
     <ScrollView
@@ -109,32 +91,7 @@ export default function MovieDetail() {
         />
       }
     >
-      <View style={{ position: "absolute", top: 45, left: 16, zIndex: 20 }}>
-        <TouchableOpacity
-          onPress={router.back}
-          style={{
-            backgroundColor: colors.overlay,
-            padding: 8,
-            borderRadius: 20,
-          }}
-        >
-          <ArrowLeft size={24} color={colors.secondary} />
-        </TouchableOpacity>
-      </View>
-
-      <View style={{ position: "absolute", top: 45, right: 16, zIndex: 20 }}>
-        <TouchableOpacity
-          style={{
-            backgroundColor: colors.overlay,
-            padding: 8,
-            borderRadius: 20,
-          }}
-        >
-          <Heart size={24} color={colors.secondary} />
-        </TouchableOpacity>
-      </View>
-
-      <View>
+      <View style={{ position: "relative" }}>
         <Image
           source={{
             uri: `${IMAGE_BASE}${movie.backdrop_path || movie.poster_path}`,
@@ -153,6 +110,35 @@ export default function MovieDetail() {
             height: 240,
           }}
         />
+        <TouchableOpacity
+          onPress={router.back}
+          style={{
+            position: "absolute",
+            top: 45,
+            left: 16,
+            backgroundColor: colors.overlay,
+            padding: 8,
+            borderRadius: 20,
+            zIndex: 10,
+            elevation: 10,
+          }}
+        >
+          <ArrowLeft size={24} color={colors.textMuted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={{
+            position: "absolute",
+            top: 45,
+            right: 16,
+            backgroundColor: colors.overlay,
+            padding: 8,
+            borderRadius: 20,
+            zIndex: 10,
+            elevation: 10,
+          }}
+        >
+          <Heart size={24} color={colors.textMuted} />
+        </TouchableOpacity>
       </View>
 
       <View style={{ padding: 16 }}>
@@ -193,7 +179,6 @@ export default function MovieDetail() {
         >
           {movie.overview}
         </Text>
-
         <TouchableOpacity
           style={{
             backgroundColor: colors.primary,
@@ -205,7 +190,7 @@ export default function MovieDetail() {
             marginBottom: 32,
           }}
         >
-          <Play size={20} color={colors.background} />
+          <Play size={20} color={colors.textMuted} />
           <Text
             style={{
               color: colors.background,
@@ -217,7 +202,6 @@ export default function MovieDetail() {
             Watch Trailer
           </Text>
         </TouchableOpacity>
-
         <Text
           style={{
             color: colors.primary,
@@ -228,7 +212,6 @@ export default function MovieDetail() {
         >
           Similar Movies
         </Text>
-
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {similarMovies.map((item) => (
             <TouchableOpacity

@@ -8,12 +8,36 @@ import { useMovies } from "../context/MoviesContext";
 const { width } = Dimensions.get("window");
 const cardWidth = width * 0.8;
 
-const TrendingMovies = ({ onPosterLoaded }: { onPosterLoaded: () => void }) => {
+const TrendingMovies = () => {
   const router = useRouter();
   const { trending, loading } = useMovies();
 
-  if (loading || !trending.length) return null;
-
+  if (loading) {
+    return (
+      <View style={{ backgroundColor: colors.background, paddingVertical: 16 }}>
+        <Text
+          style={{
+            color: colors.primary,
+            fontSize: 20,
+            fontWeight: "bold",
+            textAlign: "center",
+            marginBottom: 12,
+          }}
+        >
+          Trendings
+        </Text>
+        <View
+          style={{
+            width: cardWidth,
+            height: 300,
+            alignSelf: "center",
+            backgroundColor: colors.surface,
+            borderRadius: 12,
+          }}
+        />
+      </View>
+    );
+  }
   return (
     <View className="mt-2" style={{ backgroundColor: colors.background }}>
       <Text
@@ -45,7 +69,6 @@ const TrendingMovies = ({ onPosterLoaded }: { onPosterLoaded: () => void }) => {
               }}
               width={cardWidth}
               onPress={() => router.push(`/movies/${item.id}`)}
-              onLoadEnd={onPosterLoaded}
             />
           </View>
         )}

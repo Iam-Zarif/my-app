@@ -157,7 +157,7 @@ const MenuDrawer: React.FC<MenuDrawerProps> = ({ open, onClose }) => {
                 openLink("https://www.linkedin.com/in/mostofa-fatin-863793257")
               }
             >
-              <Linkedin size={26} color={colors.secondary} />
+              <Linkedin size={26} color={colors.accent} />
             </TouchableOpacity>
           </View>
         </SafeAreaView>

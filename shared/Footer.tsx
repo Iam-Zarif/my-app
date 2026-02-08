@@ -14,7 +14,7 @@ const Footer = () => {
     <SafeAreaView
       edges={["bottom"]}
       style={{
-        backgroundColor: colors.surface,
+        backgroundColor: colors.cardBackground,
         paddingVertical: 10,
         paddingHorizontal: 20,
         marginTop: 48,
@@ -33,7 +33,8 @@ const Footer = () => {
           justifyContent: "center",
           alignItems: "center",
           columnGap: 24,
-        }}>
+        }}
+      >
         <TouchableOpacity
           onPress={() => openLink("https://github.com/Iam-Zarif")}
         >
@@ -45,7 +46,7 @@ const Footer = () => {
             openLink("https://www.linkedin.com/in/mostofa-fatin-863793257")
           }
         >
-          <Linkedin size={18} color={colors.secondary} />
+          <Linkedin size={18} color={colors.accent} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>

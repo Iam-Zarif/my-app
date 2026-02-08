@@ -1,5 +1,11 @@
-import { useMemo, useState } from "react";
-import { View, ScrollView, StatusBar } from "react-native";
+import { useState } from "react";
+import {
+  View,
+  ScrollView,
+  StatusBar,
+  RefreshControl,
+  Text,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import colors from "../theme";
 import TrendingMovies from "../components/TrendingMovies";
@@ -7,25 +13,32 @@ import Navbar from "../shared/Navbar";
 import MovieList from "../components/MovieList";
 import Footer from "../shared/Footer";
 import MenuDrawer from "../components/MenuDrawer";
-import Loader from "../components/FullScreenLoader";
 import { useMovies } from "../context/MoviesContext";
+import HomePageLoader from "../components/HomePageLoader";
 
 const LandingPage = () => {
-  const { trending, popular, topRated, upcoming } = useMovies();
+  const { trending, popular, topRated, upcoming, loading, refresh } =
+    useMovies();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const totalPosters = useMemo(
-    () => trending.length + popular.length + topRated.length + upcoming.length,
-    [trending, popular, topRated, upcoming],
-  );
+  const showSkeleton =
+    loading ||
+    !trending.length ||
+    !popular.length ||
+    !topRated.length ||
+    !upcoming.length;
 
-  const [loaded, setLoaded] = useState(0);
-
-  const onPosterLoaded = () => {
-    setLoaded((v) => Math.min(v + 1, totalPosters));
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refresh(); 
+    } catch (err) {
+      console.warn("Failed to refresh:", err);
+    } finally {
+      setRefreshing(false);
+    }
   };
-
-  const showLoader = loaded < totalPosters;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -36,34 +49,68 @@ const LandingPage = () => {
       >
         <Navbar toggleDrawer={() => setDrawerOpen(true)} />
       </SafeAreaView>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <TrendingMovies onPosterLoaded={onPosterLoaded} />
-        <MovieList
-          title="Popular Movies"
-          section="popular"
-          route="/popular"
-          onPosterLoaded={onPosterLoaded}
-        />
-        <MovieList
-          title="Top Rated"
-          section="topRated"
-          route="/top-rated"
-          onPosterLoaded={onPosterLoaded}
-        />
-        <MovieList
-          title="Upcoming Movies"
-          section="upcoming"
-          route="/upcoming"
-          onPosterLoaded={onPosterLoaded}
-        />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]} // Android pull color
+          />
+        }
+        contentContainerStyle={{ paddingBottom: 24 }}
+      >
+        {showSkeleton ? (
+        <HomePageLoader />
+        ) : (
+          <>
+            <TrendingMovies />
+            <MovieList
+              title="Popular Movies"
+              section="popular"
+              route="/popular"
+            />
+            <MovieList
+              title="Top Rated"
+              section="topRated"
+              route="/top-rated"
+            />
+            <MovieList
+              title="Upcoming Movies"
+              section="upcoming"
+              route="/upcoming"
+            />
+          </>
+        )}
         <Footer />
-        {showLoader && (
-          <View style={{ marginVertical: 24, alignItems: "center" }}>
-            <Loader />
+      </ScrollView>
+
+      <MenuDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
+
+      {!loading &&
+        !trending.length &&
+        !popular.length &&
+        !topRated.length &&
+        !upcoming.length && (
+          <View
+            style={{
+              position: "absolute",
+              top: 100,
+              left: 16,
+              right: 16,
+              padding: 12,
+              backgroundColor: colors.overlay,
+              borderRadius: 8,
+              alignItems: "center",
+            }}
+          >
+            <Text style={{ color: colors.primary, fontWeight: "bold" }}>
+              No internet connection or failed to load movies.
+            </Text>
           </View>
         )}
-      </ScrollView>
-      <MenuDrawer open={drawerOpen} onClose={() => setDrawerOpen(false)} />
     </View>
   );
 };
