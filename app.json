@@ -1,0 +1,45 @@
+{
+  "expo": {
+    "name": "Movies",
+    "slug": "my-app",
+    "version": "1.0.0",
+    "scheme": "my-app",
+    "orientation": "portrait",
+    "icon": "./assets/logo-.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/logo-.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1A1A1A"
+    },
+    "android": {
+      "package": "com.mostofafatin.myapp",
+      "versionCode": 1,
+      "jsEngine": "hermes",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/logo-.png",
+        "backgroundColor": "#1A1A1A"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "com.mostofafatin.myapp",
+      "buildNumber": "1.0.0",
+      "jsEngine": "hermes",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "web": {
+      "favicon": "./assets/logo-.png"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e10aac83-7bcf-42d2-882c-a5f974caceee"
+      }
+    }
+  }
+}
